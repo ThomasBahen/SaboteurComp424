@@ -3,6 +3,10 @@ package student_player;
 import boardgame.Move;
 
 import Saboteur.SaboteurPlayer;
+import Saboteur.cardClasses.SaboteurCard;
+
+import java.util.ArrayList;
+
 import Saboteur.SaboteurBoardState;
 
 /** A player file submitted by a student. */
@@ -14,7 +18,7 @@ public class StudentPlayer extends SaboteurPlayer {
      * associate you with your agent. The constructor should do nothing else.
      */
     public StudentPlayer() {
-        super("xxxxxxxxx");
+        super("260675971");
     }
 
     /**
@@ -23,11 +27,12 @@ public class StudentPlayer extends SaboteurPlayer {
      * make decisions.
      */
     public Move chooseMove(SaboteurBoardState boardState) {
-        // You probably will make separate functions in MyTools.
-        // For example, maybe you'll need to load some pre-processed best opening
-        // strategies...
-        MyTools.getSomething();
+        ArrayList<SaboteurCard> hand;
+        int p_id = boardState.getTurnPlayer();
+        hand = boardState.getCurrentPlayerCards();
+        
 
+        
         // Is random the best you can do?
         Move myMove = boardState.getRandomMove();
 
