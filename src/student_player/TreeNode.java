@@ -30,7 +30,9 @@ public class TreeNode implements Comparable<TreeNode> {
         winScore = 0;
         simulationCount = 0;
         
-        boardState.processMove(startingMove);
+        if(startingMove != null) {
+        	boardState.processMove(startingMove);
+        }
 	}
 	
 	// make comparable so that we can compare which child to choose at end of search
@@ -78,8 +80,8 @@ public class TreeNode implements Comparable<TreeNode> {
 	}
 	
 	
-	public void addResult(double winScore) {
-		this.winScore += winScore;
+	public void addResult(double result) {
+		this.winScore += result;
 		simulationCount++;
 	}
 	
