@@ -13,7 +13,7 @@ public class TreeNode implements Comparable<TreeNode> {
 	
 	private static final double EXPLORATION_PARAMTER = Math.sqrt(2);
 	
-	private SaboteurBoardState boardState;
+	private MyBoardState boardState;
 	private SaboteurMove startingMove;
 	private TreeNode parent;
 	private List<TreeNode> children;
@@ -21,7 +21,7 @@ public class TreeNode implements Comparable<TreeNode> {
 	private int simulationCount;
 	
 	//Create New Node for UCTS
-	public TreeNode(SaboteurBoardState boardState, SaboteurMove startingMove) {
+	public TreeNode(MyBoardState boardState, SaboteurMove startingMove) {
         super();
         
         this.boardState = boardState;
@@ -56,7 +56,7 @@ public class TreeNode implements Comparable<TreeNode> {
 		return children;
 	}
 	
-	public SaboteurBoardState getBoardState() {
+	public MyBoardState getBoardState() {
 		return boardState;
 	}
 	
