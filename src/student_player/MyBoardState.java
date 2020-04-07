@@ -7,6 +7,7 @@ import Saboteur.cardClasses.*;
 import boardgame.Board;
 import boardgame.BoardState;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ public class MyBoardState implements Cloneable{
     public ArrayList<SaboteurCard> hand = new ArrayList<>();
     public ArrayList<SaboteurCard> opponentHand = new ArrayList<>();
     public HashMap<String, Integer> deckLeft = new HashMap<>();
+    public ArrayList<SaboteurCard> deck = new ArrayList<>();
 
     //number of malus
     public int myMalus;
@@ -45,8 +47,9 @@ public class MyBoardState implements Cloneable{
     public SaboteurTile[] hidden = new SaboteurTile[3];
 
     public int winner;
+    public int turnNumber;
 
-
+    //constructor
     public MyBoardState(SaboteurBoardState state){
         //get information about the game state
         intBoardState = state.getHiddenIntBoard().clone();
@@ -55,6 +58,7 @@ public class MyBoardState implements Cloneable{
         playerNumber = state.getTurnPlayer();
         myMalus = state.getNbMalus(playerNumber);
         theirMalus = state.getNbMalus(playerNumber ^1);
+        turnNumber = state.getTurnNumber();
 
         //figure out which tiles are revealed
         revealed = new boolean[3];
@@ -112,7 +116,8 @@ public class MyBoardState implements Cloneable{
         String[] splitted = cardName.split(":");
         String index = "";
         if(splitted.length == 2){
-            index = splitted[1];
+            String[] temp = splitted[1].split("_");
+            index = temp[0];
         }else{
             index = splitted[0];
         }
@@ -161,14 +166,17 @@ public class MyBoardState implements Cloneable{
 
     //gets a random possibility of the opponent's hand from teh cards remaining
     public ArrayList<SaboteurCard> getOppontsHand(){
-        ArrayList<SaboteurCard> deck = dictToList();
+        deck = dictToList();
         ArrayList<SaboteurCard> hand = new ArrayList<>();
         if(deck.size() < 8){
-            return deck;
+            hand = (ArrayList<SaboteurCard>) deck.clone();
+            deck.clear();
         }else{
             Random random = new Random();
             for(int i = 0; i < 8; i++){
-                hand.add(deck.get(random.nextInt(deck.size())));
+                int index = random.nextInt(deck.size());
+                hand.add(deck.get(index));
+                deck.remove(index);
             }
         }
         return hand;
@@ -305,6 +313,9 @@ public class MyBoardState implements Cloneable{
             this.hand.remove(pos[0]);
         }
         revealConnecting();
+        draw();
+        turnNumber++;
+        turnPlayer = 1 ^ turnPlayer;
     }
 
     //Adapted from SaboteurBoardState
@@ -412,11 +423,18 @@ public class MyBoardState implements Cloneable{
     public ArrayList<SaboteurMove> getAllLegalMoves() {
         // Given the current player hand, gives back all legal moves he can play.
         boolean isBlocked;
-        isBlocked= myMalus > 0;
+        ArrayList<SaboteurCard> curHand;
+        if(playerNumber == turnPlayer) {
+            isBlocked = myMalus > 0;
+            curHand = this.hand;
+        }else{
+            isBlocked = theirMalus > 0;
+            curHand = opponentHand;
+        }
 
         ArrayList<SaboteurMove> legalMoves = new ArrayList<>();
 
-        for(SaboteurCard card : hand){
+        for(SaboteurCard card : curHand){
             if( card instanceof SaboteurTile && !isBlocked) {
                 ArrayList<int[]> allowedPositions = possiblePositions((SaboteurTile)card);
                 for(int[] pos:allowedPositions){
@@ -483,13 +501,23 @@ public class MyBoardState implements Cloneable{
         }
     }
 
+    private void draw(){
+        if(this.deckLeft.size() >0){
+            if(turnPlayer==1){
+                this.hand.add(this.deck.remove(0));
+            }
+            else{
+                this.opponentHand.add(this.deck.remove(0));
+            }
+        }
+    }
+
     //modified from SaboteurBoardState code
     //checks if there is a path to the nugget
     private boolean pathToGoal(){
         if(goal[0] == -1){
             return false;
         }
-
         //checks that there is a cardPath
         return cardPath(goal, ORIGIN, true);
     }
@@ -588,13 +616,27 @@ public class MyBoardState implements Cloneable{
     public static void main(String[] args){
         MyBoardState bs = new MyBoardState(new SaboteurBoardState());
         bs.turnPlayer = 1;
+        ArrayList<int[]> positions = bs.possiblePositions(new SaboteurTile("0"));
+        for (int[] coord: positions){
+            System.out.println(Arrays.toString(coord));
+        }
         bs.processMove(new SaboteurMove(new SaboteurTile("0"), 6,5,1));
         bs.processMove(new SaboteurMove(new SaboteurTile("0"), 7,5,1));
         bs.processMove(new SaboteurMove(new SaboteurTile("0"), 8,5,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("0"), 9,5,1));
+        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 9,5,1));
+        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 9,6,1));
+        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 9,7,1));
+        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 10,7,1));
+        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 11,7,1));
         bs.processMove(new SaboteurMove(new SaboteurTile("0"), 10,5,1));
         bs.processMove(new SaboteurMove(new SaboteurTile("0"), 11,5,1));
+        bs.processMove(new SaboteurMove(new SaboteurTile("10"), 12,4,1));
+        positions = bs.possiblePositions(new SaboteurTile("0"));
         System.out.println(bs);
-        System.out.print(bs.updateWinner());
+        for (int[] coord: positions){
+            System.out.println(Arrays.toString(coord));
+        }
+        System.out.println(bs.updateWinner());
+        System.out.println(bs.winner);
     }
 }
