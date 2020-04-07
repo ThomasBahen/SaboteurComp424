@@ -1,7 +1,9 @@
 package student_player;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import Saboteur.SaboteurMove;
 
@@ -9,6 +11,8 @@ public class MonteCarloTree {
 	
 	//give some time to finish calculation (2000 is 2 seconds)
 	private static final int TIME_LIMIT = 1800;
+	private static final int MAX_TURNS_ROLLOUT = 50;
+	private Random rand;
 	
 	
 	public SaboteurMove chooseMove(MyBoardState boardState) {
@@ -43,7 +47,22 @@ public class MonteCarloTree {
 		}
 	}
 	
-	private double rollOutPolicy(TreeNode leaf) {
+	private double rollOutPolicy(TreeNode node) {
+		
+		//Rank the cards
+		
+		//Get all possible moves for the highest ranked card
+		
+		//Currently just trying random moves
+		MyBoardState boardState = new MyBoardState(node.getBoardState());
+		ArrayList<SaboteurMove> moves = boardState.getAllLegalMoves();
+		SaboteurMove randomMove =  moves.get(rand.nextInt(moves.size()));
+		
+		//repeatedly try moves until winner or turn limit
+		while(boardState.getWinner)
+		
+		
+		
 		return 0.0;
 	}
 	
