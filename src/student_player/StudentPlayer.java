@@ -27,16 +27,10 @@ public class StudentPlayer extends SaboteurPlayer {
      * make decisions.
      */
     public Move chooseMove(SaboteurBoardState boardState) {
-        ArrayList<SaboteurCard> hand;
-        int p_id = boardState.getTurnPlayer();
-        hand = boardState.getCurrentPlayerCards();
-        
-
-        
-        // Is random the best you can do?
-        Move myMove = boardState.getRandomMove();
+    	MonteCarloTree mcts = new MonteCarloTree();
+    	MyBoardState myBoard = new MyBoardState(boardState);
 
         // Return your move to be processed by the server.
-        return myMove;
+        return mcts.chooseMove(myBoard);
     }
 }
