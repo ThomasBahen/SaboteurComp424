@@ -44,7 +44,7 @@ public class SaboteurBoardState extends BoardState {
     private int winner;
     private Random rand;
 
-    SaboteurBoardState() {
+    public SaboteurBoardState() {
         super();
         this.board = new SaboteurTile[BOARD_SIZE][BOARD_SIZE];
         for (int i = 0; i < BOARD_SIZE; i++) {
