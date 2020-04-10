@@ -914,6 +914,9 @@ public class SaboteurBoardState extends BoardState {
         StringBuilder boardString = new StringBuilder();
         for (int i = 0; i < BOARD_SIZE*3; i++) {
             for (int j = 0; j < BOARD_SIZE*3; j++) {
+                if(this.intBoard[i][j] != -1){
+                    boardString.append(" ");
+                }
                 boardString.append(intBoard[i][j]);
                 boardString.append(",");
             }

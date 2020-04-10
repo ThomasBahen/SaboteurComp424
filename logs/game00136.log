@@ -1,0 +1,13 @@
+# Server version 0.08 running on 192.168.2.12:8123
+# Game ID: 136
+# Board class: Saboteur.SaboteurBoard
+# Timeout: 20000
+# First Move Timeout: 30000
+# Date: Thu Apr 09 20:35:49 EDT 2020
+# Starting at move 4
+# Player 1: Player-0, '260675971', running on 192.168.2.12
+# Player 2: Player-1, 'RandomPlayer', running on 192.168.2.12
+START Player-0 260675971
+START Player-1 RandomPlayer
+GAMEOVER SERVER ERROR UNDECIDED
+# Game ended: Thu Apr 09 20:35:49 EDT 2020
