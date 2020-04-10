@@ -6,7 +6,7 @@ import Saboteur.SaboteurMove;
 import Saboteur.cardClasses.*;
 import boardgame.Board;
 import boardgame.BoardState;
-import com.sun.jndi.toolkit.dir.HierMemDirCtx;
+//import com.sun.jndi.toolkit.dir.HierMemDirCtx;
 
 import java.awt.event.HierarchyBoundsAdapter;
 import java.lang.reflect.Array;
@@ -383,9 +383,11 @@ public class MyBoardState implements Cloneable{
                 if (this.board[i][j] != null) {
                     for (int m = 0; m < 4; m++) {
                         if (0 <= i+moves[m][0] && i+moves[m][0] < BOARD_SIZE && 0 <= j+moves[m][1] && j+moves[m][1] < BOARD_SIZE) {
-                            if (this.verifyLegit(card.getPath(), new int[]{i + moves[m][0], j + moves[m][1]} )){
-                                possiblePos.add(new int[]{i + moves[m][0], j +moves[m][1]});
-                            }
+                        	if ((i+moves[m][0] != 12  || i+moves[m][0] != 13) && (j+moves[m][1] != 4 || j+moves[m][1] != 6 || j+moves[m][1] != 8)) {
+                        		if (this.verifyLegit(card.getPath(), new int[]{i + moves[m][0], j + moves[m][1]} )){
+	                                possiblePos.add(new int[]{i + moves[m][0], j +moves[m][1]});
+	                            }
+                        	}
                         }
                     }
                 }
