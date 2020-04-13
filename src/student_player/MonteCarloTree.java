@@ -17,34 +17,45 @@ public class MonteCarloTree {
 	//give some time to finish calculation (2000 is 2 seconds)
 	private static final int TIME_LIMIT = 1800;
 	private static final int MAX_TURNS_ROLLOUT = 100;
-	private static final int GROWTH_FACTOR = 1;
-	private static final int MAX_TREE_DEPTH = 10;
+	private static final int GROWTH_FACTOR = 3;
+	private static final int MAX_TREE_DEPTH = 50;
 	private Random rand;
 	
 	
 	public SaboteurMove chooseMove(MyBoardState boardState) {
 		
 		long startTime = System.currentTimeMillis();
-		
 		TreeNode root = new TreeNode(boardState, null);
+		int counter = 0;
 		while(System.currentTimeMillis() - startTime < TIME_LIMIT) {
 
 			//Tree Policy
 			TreeNode leaf = treePolicy(root);
 			//Roll out Policy and grow tree 
 			double result = rollOutPolicy(leaf);
-			//Back propagate 
+			//Back propagate
 			backPropagate(leaf, result);
-
+			counter++;
 
 		}
+		System.out.println(counter);
+		for(TreeNode node: root.getChildren()){
+			System.out.println(node.getWinScore());
+		}
+
 		List<TreeNode> children = root.getChildren();
         TreeNode bestNode = Collections.max(children);
        	SaboteurMove bestMove = bestNode.getStartingMove();
-		for (SaboteurCard card :
-				boardState.hand) {
 
-			if(card instanceof SaboteurMap && bestNode.getBoardState().winner != boardState.playerNumber){
+		for (SaboteurCard card :boardState.hand) {
+			int unrevealed = 0;
+			for(int j = 0; j < 3; j++){
+				if(!boardState.revealed[j]){
+					unrevealed++;
+				}
+			}
+			if(card instanceof SaboteurMap && bestNode.getBoardState().winner != boardState.playerNumber && !boardState.revealed[(boardState.goal[1] - 3)/2] && unrevealed != 1){
+
 				for(int i = 0; i < 3; i++){
 					if(!boardState.revealed[i]){
 						bestMove = new SaboteurMove(card, 12, 3+2*i, boardState.playerNumber);
@@ -52,10 +63,12 @@ public class MonteCarloTree {
 				}
 			}
 		}
+
 		return bestMove;
 	}
 	
 	private TreeNode treePolicy(TreeNode start) {
+		int score = -1;
 		List<TreeNode> children = start.getChildren();
 		if(children.size() == 0) {
 			return start;	
@@ -66,7 +79,6 @@ public class MonteCarloTree {
 	
 	private double rollOutPolicy(TreeNode node) {
 		
-		int player_id = node.getBoardState().turnPlayer;
 		//Rank the cards
 		
 		//Get all possible moves for the highest ranked card
@@ -81,16 +93,23 @@ public class MonteCarloTree {
 			moves.remove(child.getStartingMove());
 		}
 		SaboteurMove bestMove =  boardState.chooseBest(moves);
+
 		if(node.getDepth() < MAX_TREE_DEPTH ) {
+			SaboteurMove newMove = bestMove;
 			for(int i=0;i<GROWTH_FACTOR;i++) {
-				MyBoardState newBoardstate = null;
+				MyBoardState newBoardState = null;
 			    try{
-					newBoardstate = (MyBoardState) boardState.clone();
+					newBoardState = (MyBoardState) boardState.clone();
                 }catch (CloneNotSupportedException e){
 			    	e.printStackTrace();
 				}
-				TreeNode child = new TreeNode(newBoardstate, bestMove);
+				TreeNode child = new TreeNode(newBoardState, newMove);
 				node.addChild(child);
+				moves.remove(newMove);
+				if(moves.size() == 0){
+					break;
+				}
+				newMove = boardState.chooseBest(moves);
 			}
 		}
 		//repeatedly try moves until winner or turn limit
@@ -105,10 +124,9 @@ public class MonteCarloTree {
 				rolloutBoardState.processMove(bestMove);
 				turnCount++;
 			}
-			rolloutBoardState.updateWinner();
-			if (rolloutBoardState.winner == player_id) {
+			if (rolloutBoardState.winner == rolloutBoardState.playerNumber) {
 				return 1;
-			} else if (rolloutBoardState.winner == Board.NOBODY) {
+			} else if (rolloutBoardState.winner == Board.DRAW || rolloutBoardState.winner == Board.NOBODY) {
 				return 0;
 			} else {
 				return -1;

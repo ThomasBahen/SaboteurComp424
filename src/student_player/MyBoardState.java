@@ -7,9 +7,7 @@ import Saboteur.cardClasses.*;
 import boardgame.Board;
 import boardgame.BoardState;
 //import com.sun.jndi.toolkit.dir.HierMemDirCtx;
-
-import java.awt.event.HierarchyBoundsAdapter;
-import java.lang.reflect.Array;
+import javax.print.attribute.standard.OrientationRequested;
 import java.util.*;
 
 public class MyBoardState implements Cloneable{
@@ -47,7 +45,7 @@ public class MyBoardState implements Cloneable{
     public int turnNumber;
 
     //constructor
-    public MyBoardState(SaboteurBoardState state){
+    public MyBoardState(SaboteurBoardState state, int malus, int bonus, int map, int destroy){
         //get information about the game state
         intBoardState = state.getHiddenIntBoard().clone();
         board = state.getHiddenBoard();
@@ -68,6 +66,11 @@ public class MyBoardState implements Cloneable{
         for (SaboteurCard card: hand) {
             removeFromDeck(card, deckLeft);
         }
+        deckLeft.put("malus", deckLeft.get("malus") - malus);
+        deckLeft.put("bonus", deckLeft.get("bonus") - bonus);
+        deckLeft.put("map", deckLeft.get("map") - map);
+        deckLeft.put("destroy", deckLeft.get("destroy") - destroy);
+
         //remove cards from deck that are already on the board
         for (int i = 0; i < board.length; i++) {
             for (int j = 0; j < board[0].length; j++) {
@@ -100,6 +103,9 @@ public class MyBoardState implements Cloneable{
         clone.hand = (ArrayList<SaboteurCard>) this.hand.clone();
         clone.opponentHand = (ArrayList<SaboteurCard>) this.opponentHand.clone();
         clone.deck = (ArrayList<SaboteurCard>) this.deck.clone();
+        deck.addAll(opponentHand);
+        Collections.shuffle(deck);
+        opponentHand = getOppontsHand();
         clone.intBoardState = new int[this.intBoardState.length][];
         for(int i = 0; i < this.intBoardState.length; i++){
             clone.intBoardState[i] = this.intBoardState[i].clone();
@@ -114,7 +120,9 @@ public class MyBoardState implements Cloneable{
             }
         }
         clone.findHidden();
-        clone.randomizeNugget();
+        clone.revealConnecting();
+        clone.goal = this.goal;
+        //clone.randomizeNugget();
         return clone;
     }
 
@@ -326,6 +334,7 @@ public class MyBoardState implements Cloneable{
             if(turnPlayer == playerNumber){
                 for(SaboteurCard card : this.hand){
                     this.hand.remove(card);
+                    this.revealed[(goal[1]-3)/2] = true;
                     break;
                 }
             }else{
@@ -365,7 +374,8 @@ public class MyBoardState implements Cloneable{
                 opponentHand.remove(pos[0]);
             }
         }
-        //revealConnecting();
+        getIntBoard();
+        revealConnecting();
         draw();
         turnNumber++;
         updateWinner();
@@ -383,11 +393,9 @@ public class MyBoardState implements Cloneable{
                 if (this.board[i][j] != null) {
                     for (int m = 0; m < 4; m++) {
                         if (0 <= i+moves[m][0] && i+moves[m][0] < BOARD_SIZE && 0 <= j+moves[m][1] && j+moves[m][1] < BOARD_SIZE) {
-                        	if ((i+moves[m][0] != 12  || i+moves[m][0] != 13) && (j+moves[m][1] != 4 || j+moves[m][1] != 6 || j+moves[m][1] != 8)) {
-                        		if (this.verifyLegit(card.getPath(), new int[]{i + moves[m][0], j + moves[m][1]} )){
-	                                possiblePos.add(new int[]{i + moves[m][0], j +moves[m][1]});
-	                            }
-                        	}
+                            if (this.verifyLegit(card.getPath(), new int[]{i + moves[m][0], j + moves[m][1]} )){
+                                possiblePos.add(new int[]{i + moves[m][0], j +moves[m][1]});
+                            }
                         }
                     }
                 }
@@ -492,7 +500,6 @@ public class MyBoardState implements Cloneable{
         }
 
         ArrayList<SaboteurMove> legalMoves = new ArrayList<>();
-        System.out.println(curHand.size());
         for(SaboteurCard card : curHand){
 
             if( card instanceof SaboteurTile && !isBlocked) {
@@ -578,66 +585,87 @@ public class MyBoardState implements Cloneable{
     public SaboteurMove chooseBest(ArrayList<SaboteurMove> moves){
         SaboteurMove best = null;
         int bestDistance = Integer.MAX_VALUE;
-        for(SaboteurMove move: moves){
-            if(myMalus > 0){
-                if(move.getCardPlayed() instanceof SaboteurBonus){
+        int numEdgesClosest = -1;
+        if(turnPlayer == playerNumber){
+            for(SaboteurMove move: moves){
+                if(myMalus > 0){
+                    if(move.getCardPlayed() instanceof SaboteurBonus){
+                        best = move;
+                        break;
+                    }
+                }
+                if(move.getCardPlayed() instanceof SaboteurMalus){
                     best = move;
                     break;
                 }
-            }
-            if(move.getCardPlayed() instanceof SaboteurMalus){
-               best = move;
-               break;
-            }
-            String[] name = move.getCardPlayed().getName().split(":");
-            if(name[0].equals("Tile")){
-                int [] position = move.getPosPlayed();
-                int [][] tile = ((SaboteurTile) move.getCardPlayed()).getPath();
-                int[][] edges = new int[][]{{0,1},{1,0},{1,2},{2,1}};
-                if(tile[1][1] == 0){
-                    continue;
-                }
-
-                int pathCounter = 0;
-                for(int i = 0; i < 3; i++){
-                    if(tile[edges[i][0]][edges[i][1]] == 1){
-                        pathCounter++;
-                    }
-                }
-                if(pathCounter == 1){
-                    continue;
-                }
-                for(int i = 0; i < 4; i++){
-                    if(tile[edges[i][0]][edges[i][1]] == 0){
+                String[] name = move.getCardPlayed().getName().split(":");
+                if(name[0].equals("Tile")){
+                    int [] position = move.getPosPlayed();
+                    int [][] tile = ((SaboteurTile) move.getCardPlayed()).getPath();
+                    int[][] edges = new int[][]{{0,1},{1,0},{1,2},{2,1}};
+                    if(tile[1][1] == 0){
                         continue;
                     }
-                    int[] borderPos = new int[]{position[0]*3+edges[i][1], position[1]*3+edges[i][0]};
-                    int[] goalPos = new int[]{goal[0]*3 +1, goal[1]*3+1};
-                    int distance = Math.abs(borderPos[0] - goalPos[0]) + Math.abs(borderPos[1] - goalPos[1]);
-                    if(distance < bestDistance) {
-                        best = move;
-                        bestDistance = distance;
+                    int pathCounter = 0;
+                    for(int i = 0; i < 4; i++){
+                        if(tile[edges[i][0]][edges[i][1]] == 1){
+                            pathCounter++;
+                        }
                     }
-//                    }else{
-//                        for(int j = 0; j < 3; j++){
-//                            if(!revealed[j]){
-//                                int[] goalPos = new int[]{HIDDEN_POS[j][0]*3+1, HIDDEN_POS[j][1]*3+1};
-//                                int distance = Math.abs(borderPos[0] - goalPos[0]) + Math.abs(borderPos[1] - goalPos[1]);
-//                                if(distance < bestDistance){
-//                                    best = move;
-//                                    bestDistance = distance;
-//                                }
-//                            }
-//                        }
-
+                    if(pathCounter == 1){
+                        continue;
+                    }
+                    int numEdges = 0;
+                    for(int i = 0; i < 4; i++){
+                        if(tile[edges[i][0]][edges[i][1]] == 0){
+                            continue;
+                        }
+                        int[] borderPos = new int[]{position[0]*3+edges[i][1], position[1]*3+edges[i][0]};
+                        int distance = Integer.MAX_VALUE;
+                        if(revealed[(goal[1]-3)/2]){
+                            int[] goalPos = new int[]{goal[0]*3 +1, goal[1]*3+1};
+                            distance = Math.abs(borderPos[0] - goalPos[0]) + Math.abs(borderPos[1] - goalPos[1]);
+                            if(distance < bestDistance){
+                                best = move;
+                                bestDistance = distance;
+                                numEdges++;
+                            }else if(distance == bestDistance){
+                                numEdges++;
+                            }
+                        }else{
+                            for(int j = 0; j < 3; j++){
+                                if(!revealed[j]){
+                                    int[] goalPos = HIDDEN_POS[j];
+                                    distance = Math.abs(borderPos[0] - (goalPos[0]*3+1)) + Math.abs(borderPos[1] - (goalPos[1]*3+1));
+                                }
+                                if(distance < bestDistance){
+                                    best = move;
+                                    bestDistance = distance;
+                                    numEdges++;
+                                }else if(distance == bestDistance){
+                                    numEdges++;
+                                }
+                            }
+                        }
+                    }
+                    if(numEdges > numEdgesClosest){
+                        numEdgesClosest  =numEdges;
+                        best = move;
+                    }
                 }
             }
+            if(best == null){
+                return moves.get(0);
+            }
+        }else{
+            Random random = new Random();
+            int index = random.nextInt(moves.size());
+            best = moves.get(index);
         }
-        if(best == null){
-            return moves.get(0);
-        }
+
         return best;
     }
+
 
     //modified from SaboteurBoardState code
     //checks if there is a path to the nugget
@@ -646,16 +674,25 @@ public class MyBoardState implements Cloneable{
             return false;
         }
         //checks that there is a cardPath
-        return cardPath(goal, ORIGIN, true);
+        if(cardPath(goal, ORIGIN, true)){
+            int[] intGoal = new int[]{goal[0]*3+1, goal[1]*3+1};
+            int[] intOrigin = new int[]{ORIGIN[1]*3 +1, ORIGIN[1]*3+1};
+            return cardPath(intGoal, intOrigin, false);
+        }
+        return false;
     }
 
     private void revealConnecting(){
+        int[] intOriginPos = new int[]{ORIGIN[1]*3 + 1, ORIGIN[1]*3 +1};
         for(int i = 0; i < 3; i++){
             if(this.pathToHidden[i]){
                 continue;
             }
             if(cardPath(HIDDEN_POS[i], ORIGIN, true)){
-                pathToHidden[i] = true;
+                int[] intHiddenPos = new int[]{HIDDEN_POS[i][0] *3 +1, HIDDEN_POS[i][1] *3 +1};
+                if(cardPath(intHiddenPos, intOriginPos, false)){
+                    pathToHidden[i] = true;
+                }
             }
         }
     }
@@ -734,33 +771,4 @@ public class MyBoardState implements Cloneable{
         return boardString.toString();
     }
 
-    public static void main(String[] args){
-        MyBoardState bs = new MyBoardState(new SaboteurBoardState());
-        bs.turnPlayer = 1;
-        bs.playerNumber = 1;
-        for (SaboteurCard card: bs.hand){
-            //System.out.print(card.getName() + ", ");
-        }
-        //System.out.println("");
-
-        ArrayList<SaboteurMove> moves = bs.getAllLegalMoves();
-        SaboteurMove bestMove = bs.chooseBest(moves);
-        //System.out.println(bestMove.getCardPlayed().getName() + ": " + Arrays.toString(bs.chooseBest(moves).getPosPlayed()));
-
-
-        bs.processMove(new SaboteurMove(new SaboteurTile("0"), 6,5,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("0"), 7,5,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("0"), 8,5,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 9,5,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 9,6,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 9,7,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 10,7,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("8"), 11,7,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("0"), 10,5,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("0"), 11,5,1));
-        bs.processMove(new SaboteurMove(new SaboteurTile("10"), 12,4,1));
-        //System.out.println(bs);
-        //System.out.println(bs.updateWinner());
-        //System.out.println(bs.winner);
-    }
 }

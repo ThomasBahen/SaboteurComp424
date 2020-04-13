@@ -609,7 +609,7 @@ public class SaboteurBoardState extends BoardState {
 
         if(m.getFromBoard()){
             this.initializeFromStringForInitialCopy(m.getBoardInit());
-            System.out.println("inititalized"+this.hashCode());
+            //System.out.println("inititalized"+this.hashCode());
             turnNumber++;
             return;
         }
@@ -619,15 +619,15 @@ public class SaboteurBoardState extends BoardState {
         // Concerning the map observation, the player then has to check by himself the result of its observation.
         //Note: this method is ran in a BoardState ran by the server as well as in a BoardState ran by the player.
         if (!isLegal(m)) {
-//            System.out.println("Found an invalid Move for player " + this.turnPlayer+" of board"+ this.hashCode());
+//            //System.out.println("Found an invalid Move for player " + this.turnPlayer+" of board"+ this.hashCode());
 //            ArrayList<SaboteurCard> hand = this.turnPlayer==1? this.player1Cards : this.player2Cards;
-//            System.out.println("in hand:");
+//            //System.out.println("in hand:");
 //            for(SaboteurCard card : hand) {
 //                if (card instanceof SaboteurTile){
-//                    System.out.println(card.getName());
+//                    //System.out.println(card.getName());
 //                }
 //                else{
-//                    System.out.println(card.getName());
+//                    //System.out.println(card.getName());
 //                }
 //            }
             throw new IllegalArgumentException("Invalid move. Move: " + m.toPrettyString());
@@ -798,7 +798,7 @@ public class SaboteurBoardState extends BoardState {
             visited.add(visitingPos);
             if(usingCard) addUnvisitedNeighborToQueue(visitingPos,queue,visited,BOARD_SIZE,usingCard);
             else addUnvisitedNeighborToQueue(visitingPos,queue,visited,BOARD_SIZE*3,usingCard);
-            System.out.println(queue.size());
+            //System.out.println(queue.size());
         }
         return false;
     }
@@ -847,7 +847,7 @@ public class SaboteurBoardState extends BoardState {
             if(!this.hiddenRevealed[currentTargetIdx]) {  //verify that the current target has not been already discovered. Even if there is a destruction event, the target keeps being revealed!
 
                 if (cardPath(originTargets, targetPos, true)) { //checks that there is a cardPath
-                    System.out.println("card path found"); //todo remove
+                    //System.out.println("card path found"); //todo remove
                     this.printBoard();
                     //next: checks that there is a path of ones.
                     ArrayList<int[]> originTargets2 = new ArrayList<>();
@@ -860,7 +860,7 @@ public class SaboteurBoardState extends BoardState {
                     //get the target position in 0-1 coordinate
                     int[] targetPos2 = {targetPos[0]*3+1, targetPos[1]*3+1};
                     if (cardPath(originTargets2, targetPos2, false)) {
-                        System.out.println("0-1 path found");
+                        //System.out.println("0-1 path found");
 
                         this.hiddenRevealed[currentTargetIdx] = true;
                         this.player1hiddenRevealed[currentTargetIdx] = true;
@@ -868,12 +868,12 @@ public class SaboteurBoardState extends BoardState {
                         atLeastOnefound =true;
                     }
                     else{
-                        System.out.println("0-1 path was not found");
+                        //System.out.println("0-1 path was not found");
                     }
                 }
             }
             else{
-                System.out.println("hidden already revealed");
+                //System.out.println("hidden already revealed");
                 atLeastOnefound = true;
             }
         }
@@ -905,7 +905,7 @@ public class SaboteurBoardState extends BoardState {
     }
 
     public void printBoard() {
-        System.out.println(this.toString());
+        //System.out.println(this.toString());
     }
 
     @Override
@@ -932,13 +932,13 @@ public class SaboteurBoardState extends BoardState {
         int id = FIRST_PLAYER;
         while(pbs.winner == Board.NOBODY) {
             //pbs.printBoard();
-            //System.out.println("Enter move (cardIndex x y): ");
+            ////System.out.println("Enter move (cardIndex x y): ");
             //String moveStr = scanner.nextLine();
             //SaboteurMove m = new SaboteurMove(moveStr + " " + id);
             SaboteurMove m = pbs.getRandomMove();
-            System.out.println("Chosed move: " + m.toPrettyString());
+            //System.out.println("Chosed move: " + m.toPrettyString());
             if (!pbs.isLegal(m)) {
-                System.out.println("Invalid move: " + m.toPrettyString());
+                //System.out.println("Invalid move: " + m.toPrettyString());
                 continue;
             }
             pbs.processMove(m);
@@ -949,19 +949,19 @@ public class SaboteurBoardState extends BoardState {
 
         switch(pbs.winner) {
             case 1:
-                System.out.println("First player wins.");
+                //System.out.println("First player wins.");
                 break;
             case 0:
-                System.out.println("Second player wins.");
+                //System.out.println("Second player wins.");
                 break;
             case Board.DRAW:
-                System.out.println("Draw.");
+                //System.out.println("Draw.");
                 break;
             case Board.NOBODY:
-                System.out.println("Nobody has won.");
+                //System.out.println("Nobody has won.");
                 break;
             default:
-                System.out.println("Unknown error.");
+                //System.out.println("Unknown error.");
         }
         //pbs.printBoard();
     }
